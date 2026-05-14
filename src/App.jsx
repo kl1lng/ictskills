@@ -65,7 +65,7 @@ const App = () => {
     // 1. Check for shared resource (path or query)
     const resourceMatch = path.match(/\/share\/resource\/(\d+)/);
     const shareId = resourceMatch ? resourceMatch[1] : params.get('share');
-    if (shareId) setSharedResourceId(parseInt(shareId));
+    if (shareId) setSharedResourceId(shareId);
 
     // 2. Check for join link (path or query)
     const classMatch = path.match(/\/share\/class\/(.+)/);
@@ -117,9 +117,25 @@ const App = () => {
   // Handle Shared Resource Auto-Navigation
   useEffect(() => {
     if (isLoggedIn && sharedResourceId) {
-      const resource = allMaterials.find(m => m.id === sharedResourceId);
+      const resource = allMaterials.find(m => String(m.id) === String(sharedResourceId));
       if (resource) {
         setSelectedClass(resource.className);
+        
+        // Auto-join class if student
+        if (userRole === 'student' && !joinedClasses.includes(resource.className)) {
+          const newList = [...joinedClasses, resource.className];
+          setJoinedClasses(newList);
+          localStorage.setItem(`joined_classes_${userData.name}`, JSON.stringify(newList));
+          
+          setClassStudents(prev => {
+            const current = prev[resource.className] || [];
+            if (!current.includes(userData.name)) {
+              return { ...prev, [resource.className]: [...current, userData.name] };
+            }
+            return prev;
+          });
+        }
+
         if (resource.type === 'folder') {
           setInitialFolderId(resource.id);
         }
@@ -127,7 +143,7 @@ const App = () => {
         window.history.replaceState({}, document.title, '/');
       }
     }
-  }, [isLoggedIn, sharedResourceId, allMaterials]);
+  }, [isLoggedIn, sharedResourceId, allMaterials, userRole, joinedClasses, userData.name]);
 
   const handleLogin = (data) => {
     localStorage.setItem('userRole', data.role);
