@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, ChevronRight, Folder as FolderIcon, File, X } from 'lucide-react';
+import { Search, ChevronRight, Folder as FolderIcon, FileText, X, Files, Link2, Lock, Unlock } from 'lucide-react';
 import ResourceCard from './ResourceCard';
 import SubmissionModal from './SubmissionModal';
 import TestModal from './TestModal';
 
-const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, currentFolderId, setCurrentFolderId, onAddFolder }) => {
+const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, currentFolderId, setCurrentFolderId, onAddFolder, userRole }) => {
   const [submissionItem, setSubmissionItem] = useState(null);
   const [testItem, setTestItem] = useState(null);
+
+  const isTeacher = userRole === 'teacher';
 
   // Global search: if searchQuery exists, ignore currentFolderId
   const filteredMaterials = materials.filter(m => 
     m.className === activeClass && 
     m.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (searchQuery ? true : (currentFolderId ? m.folderId === currentFolderId : !m.folderId))
+    (searchQuery ? true : (currentFolderId ? m.folderId === currentFolderId : !m.folderId)) &&
+    (isTeacher ? true : m.isPublic !== false)
   );
 
   const folders = filteredMaterials.filter(m => m.type === 'folder');
@@ -23,6 +26,12 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
     if (window.confirm('Вы уверены, что хотите удалить этот элемент?')) {
       setMaterials(materials.filter(m => m.id !== id));
     }
+  };
+
+  const handleTogglePublic = (id) => {
+    setMaterials(materials.map(m => 
+      m.id === id ? { ...m, isPublic: m.isPublic === false ? true : false } : m
+    ));
   };
 
   const getBreadcrumbs = () => {
@@ -40,19 +49,19 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
   return (
     <>
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 mb-6 text-sm font-medium text-slate-500 overflow-x-auto whitespace-nowrap pb-2">
+      <div className="flex items-center gap-2 mb-6 text-sm font-medium text-slate-500 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
         <button 
           onClick={() => setCurrentFolderId(null)}
           className={`hover:text-indigo-600 transition-colors shrink-0 ${!currentFolderId ? 'text-indigo-600' : ''}`}
         >
-          Класс {activeClass}
+          {isTeacher ? `Класс ${activeClass}` : 'Мои материалы'}
         </button>
         {breadcrumbs.map((crumb, idx) => (
           <React.Fragment key={crumb.id}>
             <ChevronRight size={14} className="text-slate-300 shrink-0" />
             <button 
               onClick={() => setCurrentFolderId(crumb.id)}
-              className={`hover:text-indigo-600 transition-colors shrink-0 ${idx === breadcrumbs.length - 1 ? 'text-indigo-600 font-bold' : ''}`}
+              className={`hover:text-indigo-600 transition-colors shrink-0 truncate max-w-[150px] ${idx === breadcrumbs.length - 1 ? 'text-indigo-600 font-bold' : ''}`}
             >
               {crumb.title}
             </button>
@@ -73,30 +82,40 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
           {folders.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <span className="text-sm">📂</span>
+                <FolderIcon size={14} className="text-indigo-500" />
                 Папки {searchQuery && '(результаты поиска)'}
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {folders.map(folder => (
                   <motion.div 
                     key={folder.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setCurrentFolderId(folder.id)}
-                    className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center gap-3 cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all group relative"
+                    className={`bg-white border p-4 rounded-2xl flex items-center gap-3 cursor-pointer hover:border-indigo-300 hover:shadow-sm transition-all group relative ${!folder.isPublic && isTeacher ? 'opacity-70 border-dashed' : 'border-slate-200'}`}
                   >
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center shrink-0">
                       <FolderIcon size={20} fill="currentColor" fillOpacity={0.2} />
                     </div>
-                    <span className="font-bold text-slate-700 truncate group-hover:text-indigo-600 transition-colors">
+                    <span className="font-bold text-slate-700 truncate group-hover:text-indigo-600 transition-colors pr-8">
                       {folder.title}
                     </span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDelete(folder.id); }}
-                      className="absolute top-2 right-2 p-1.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={14} />
-                    </button>
+                    {isTeacher && (
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleTogglePublic(folder.id); }}
+                          className="p-1.5 text-slate-300 hover:text-indigo-500"
+                        >
+                          {folder.isPublic !== false ? <Unlock size={12} /> : <Lock size={12} />}
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(folder.id); }}
+                          className="p-1.5 text-slate-300 hover:text-red-500"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -106,11 +125,11 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
           {/* Files Section */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <span className="text-sm">📄</span>
+              <Files size={14} className="text-slate-400" />
               Файлы {searchQuery && '(результаты поиска)'}
             </h3>
             {files.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {files.map((item) => (
                   <ResourceCard 
                     key={item.id} 
@@ -118,6 +137,8 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
                     onSubmitWork={() => setSubmissionItem(item)} 
                     onOpenTest={() => setTestItem(item)}
                     onDelete={() => handleDelete(item.id)}
+                    userRole={userRole}
+                    onTogglePublic={() => handleTogglePublic(item.id)}
                   />
                 ))}
               </div>
@@ -133,7 +154,7 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
                   <p className="text-slate-500 mb-6">
                     {searchQuery ? 'Попробуйте изменить запрос' : 'В этом разделе пока нет материалов'}
                   </p>
-                  {!searchQuery && (
+                  {!searchQuery && isTeacher && (
                     <button 
                       onClick={onAddFolder}
                       className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl font-bold hover:bg-indigo-100 transition-all"

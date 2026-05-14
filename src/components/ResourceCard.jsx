@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import { FileText, Video, Link as LinkIcon, ExternalLink, Play, Eye, Presentation, Folder, Trash2, Copy, Check } from 'lucide-react';
+import { FileText, Video, ExternalLink, Play, Eye, Presentation, Folder, Trash2, Copy, Check, Lock, Unlock, Send, Link2 } from 'lucide-react';
 
-const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder }) => {
+const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder, userRole, onTogglePublic }) => {
   const [copied, setCopied] = useState(false);
+  const isTeacher = userRole === 'teacher';
 
   const getIcon = (type) => {
     switch(type) {
-      case 'video': return <span className="text-lg leading-none">🎥</span>;
-      case 'pdf': return <span className="text-lg leading-none">📄</span>;
-      case 'pptx': return <span className="text-lg leading-none">📊</span>;
-      case 'link': return <span className="text-lg leading-none">🔗</span>;
-      case 'folder': return <span className="text-lg leading-none">📂</span>;
+      case 'video': return <Video size={18} className="text-blue-500" />;
+      case 'pdf': return <FileText size={18} className="text-red-500" />;
+      case 'pptx': return <Presentation size={18} className="text-orange-500" />;
+      case 'link': return <Link2 size={18} className="text-indigo-500" />;
+      case 'folder': return <Folder size={18} className="text-indigo-600" />;
       default: return <FileText size={18} />;
     }
   };
 
   const handleCopy = (e) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(item.url);
+    const shareLink = `${window.location.origin}${window.location.pathname}?share=${item.id}`;
+    navigator.clipboard.writeText(shareLink).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -98,21 +100,32 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex flex-col h-full overflow-hidden group hover:-translate-y-1 relative">
-      {/* Delete Button */}
-      <button 
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="absolute top-3 right-3 z-20 p-2 bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-      >
-        <Trash2 size={16} />
-      </button>
+    <div className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex flex-col h-full overflow-hidden group hover:-translate-y-1 relative ${!item.isPublic && isTeacher ? 'opacity-70 bg-slate-50' : ''}`}>
+      {/* Teacher Controls */}
+      {isTeacher && (
+        <div className="absolute top-3 right-3 z-20 flex gap-2">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onTogglePublic(); }}
+            className={`p-2 backdrop-blur-sm rounded-lg shadow-sm transition-all ${item.isPublic !== false ? 'bg-white text-emerald-500 hover:text-emerald-600' : 'bg-white text-slate-400 hover:text-indigo-600'}`}
+            title={item.isPublic !== false ? 'Публичный' : 'Приватный'}
+          >
+            {item.isPublic !== false ? <Unlock size={16} /> : <Lock size={16} />}
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="p-2 bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Preview Area */}
       <div className="h-[140px] w-full relative shrink-0 border-b border-slate-50">
         {renderPreview()}
         {/* Hover Overlay */}
         <div 
-          className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors duration-300 flex items-center justify-center cursor-pointer" 
+          className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-colors duration-300 flex items-center justify-center cursor-pointer" 
           onClick={() => {
             if (item.type === 'folder') onOpenFolder();
             else if (item.category === 'Тесты' && onOpenTest) onOpenTest(item);
@@ -138,9 +151,16 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder }
           }`}>
             {getIcon(item.type)}
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded">
-            {item.type === 'folder' ? 'Папка' : item.category}
-          </span>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded">
+              {item.type === 'folder' ? 'Папка' : item.category}
+            </span>
+            {isTeacher && !item.isPublic && (
+              <span className="text-[9px] text-red-500 font-bold uppercase flex items-center gap-0.5">
+                <Lock size={8} /> Приватно
+              </span>
+            )}
+          </div>
         </div>
         
         <h3 className="font-bold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">{item.title}</h3>
@@ -151,24 +171,26 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder }
             {item.type}
           </span>
           <div className="flex items-center gap-2">
-            {item.type !== 'folder' && (
+            {item.type !== 'folder' && isTeacher && (
               <button 
                 onClick={handleCopy}
                 className={`p-2 rounded-lg transition-all ${copied ? 'text-emerald-500 bg-emerald-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'}`}
-                title="Копировать ссылку"
+                title="Копировать прямую ссылку"
               >
                 {copied ? <Check size={16} /> : <Copy size={16} />}
               </button>
             )}
             
-            {item.category === 'Задания' && (
+            {!isTeacher && (item.category === 'Задания' || item.category === 'Практика') && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onSubmitWork(item); }} 
-                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-all flex items-center gap-1.5"
               >
-                Сдать
+                <Send size={14} />
+                Сдать работу
               </button>
             )}
+
             <button 
               onClick={(e) => { 
                 e.stopPropagation(); 
@@ -176,7 +198,7 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder }
                 else if (item.category === 'Тесты' && onOpenTest) onOpenTest(item);
                 else window.open(item.url, '_blank'); 
               }} 
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline bg-transparent border-none p-0 cursor-pointer"
+              className={`text-xs font-bold transition-all ${!isTeacher && (item.category === 'Задания' || item.category === 'Практика') ? 'text-slate-400 hover:text-slate-600' : 'text-indigo-600 hover:text-indigo-700'}`}
             >
               Открыть
             </button>

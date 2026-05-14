@@ -5,10 +5,12 @@ import ResourceGrid from './ResourceGrid';
 import AddMaterialModal from './AddMaterialModal';
 import AnalyticsView from './AnalyticsView';
 
-const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, teacherData, onLogout, onReset }) => {
+const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, userRole, userData, onLogout, onReset }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('materials'); // 'materials' or 'analytics'
   const [currentFolderId, setCurrentFolderId] = useState(null);
+
+  const isTeacher = userRole === 'teacher';
 
   const handleAddFolder = () => {
     const folderName = window.prompt('Введите название новой папки:');
@@ -19,7 +21,8 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
         type: 'folder',
         className: selectedClass,
         url: '#',
-        folderId: currentFolderId // Set parent folder
+        folderId: currentFolderId,
+        isPublic: true
       };
       setMaterials([...materials, newFolder]);
     }
@@ -33,6 +36,7 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
         activeClass={selectedClass} 
         setActiveClass={(newClass) => { setSelectedClass(newClass); setCurrentFolderId(null); }} 
         onReset={onReset}
+        userRole={userRole}
       />
       
       <main className="flex-1 flex flex-col min-w-0">
@@ -43,7 +47,8 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
           onAddFolderClick={handleAddFolder}
           viewMode={viewMode}
           setViewMode={setViewMode}
-          teacherData={teacherData}
+          userData={userData}
+          userRole={userRole}
           onLogout={onLogout}
           selectedClass={selectedClass}
         />
@@ -69,6 +74,7 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
               currentFolderId={currentFolderId}
               setCurrentFolderId={setCurrentFolderId}
               onAddFolder={handleAddFolder}
+              userRole={userRole}
             />
           ) : (
             <AnalyticsView activeClass={selectedClass} />
@@ -79,7 +85,7 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
       <AddMaterialModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onAdd={(newMaterial) => setMaterials([...materials, { ...newMaterial, folderId: currentFolderId }])} 
+        onAdd={(newMaterial) => setMaterials([...materials, { ...newMaterial, folderId: currentFolderId, isPublic: true }])} 
         activeClass={selectedClass}
       />
     </div>
