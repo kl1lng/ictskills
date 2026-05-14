@@ -16,46 +16,47 @@ const App = () => {
   const [pendingJoinId, setPendingJoinId] = useState(null);
 
   // App state with isolation logic
-  const [allClasses, setAllClasses] = useState(() => {
-    const saved = localStorage.getItem('edu_global_classes');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [allMaterials, setAllMaterials] = useState(() => {
-    const saved = localStorage.getItem('edu_global_materials');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [submissions, setSubmissions] = useState(() => {
-    const saved = localStorage.getItem('edu_submissions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [classStudents, setClassStudents] = useState(() => {
-    const saved = localStorage.getItem('edu_class_students');
-    return saved ? JSON.parse(saved) : {}; // { classId: [studentName, ...] }
-  });
+  const [allClasses, setAllClasses] = useState([]);
+  const [allMaterials, setAllMaterials] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [classStudents, setClassStudents] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedClass, setSelectedClass] = useState('10Б');
   const [initialFolderId, setInitialFolderId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Sync global state to LocalStorage
+  // Fetch initial data from backend
   useEffect(() => {
-    localStorage.setItem('edu_global_classes', JSON.stringify(allClasses));
-  }, [allClasses]);
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(data => {
+        setAllClasses(data.classes || []);
+        setAllMaterials(data.materials || []);
+        setSubmissions(data.submissions || []);
+        setClassStudents(data.classStudents || {});
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load data:', err);
+        setIsLoading(false);
+      });
+  }, []);
+
+  // Sync global state to Backend
+  const syncData = (newData) => {
+    fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newData)
+    }).catch(err => console.error('Failed to sync data:', err));
+  };
 
   useEffect(() => {
-    localStorage.setItem('edu_global_materials', JSON.stringify(allMaterials));
-  }, [allMaterials]);
-
-  useEffect(() => {
-    localStorage.setItem('edu_submissions', JSON.stringify(submissions));
-  }, [submissions]);
-
-  useEffect(() => {
-    localStorage.setItem('edu_class_students', JSON.stringify(classStudents));
-  }, [classStudents]);
+    if (!isLoading) {
+      syncData({ classes: allClasses, materials: allMaterials, submissions, classStudents });
+    }
+  }, [allClasses, allMaterials, submissions, classStudents, isLoading]);
 
   // Initial Auth & Share Check
   useEffect(() => {
@@ -187,9 +188,13 @@ const App = () => {
   };
 
   const resetData = () => {
-    if (window.confirm('Вы уверены, что хотите сбросить все данные?')) {
+    if (window.confirm('Вы уверены, что хотите сбросить все данные? Внимание: Это удалит данные для всех пользователей!')) {
       localStorage.clear();
-      window.location.reload();
+      fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classes: [], materials: [], submissions: [], classStudents: {} })
+      }).then(() => window.location.reload());
     }
   };
 
@@ -208,9 +213,13 @@ const App = () => {
     ? joinedClasses.map(id => ({ id, name: id })) 
     : myClasses;
 
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
+  }
+
   // Show Shared Resource View if requested (Public Access)
   if (sharedResourceId && !isLoggedIn) {
-    const resource = allMaterials.find(m => m.id === sharedResourceId);
+    const resource = allMaterials.find(m => String(m.id) === String(sharedResourceId));
     if (resource) {
       return (
         <PublicResourceView 
@@ -223,7 +232,14 @@ const App = () => {
 
   // Show Auth Page if not logged in
   if (!isLoggedIn) {
+    if (isLoading) {
+      return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
+    }
     return <AuthPage onLogin={handleLogin} />;
+  }
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
   }
 
   return (
