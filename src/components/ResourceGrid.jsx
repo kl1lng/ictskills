@@ -16,7 +16,7 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
     m.className === activeClass && 
     m.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
     (searchQuery ? true : (currentFolderId ? m.folderId === currentFolderId : !m.folderId)) &&
-    (isTeacher ? true : m.isPublic !== false)
+    (isTeacher ? true : (m.isPublic !== false || m.ownerId === userData?.name))
   );
 
   const folders = filteredMaterials.filter(m => m.type === 'folder');

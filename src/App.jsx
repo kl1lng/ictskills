@@ -164,9 +164,10 @@ const App = () => {
   const myClasses = allClasses.filter(c => c.ownerId === userData.name);
   const myMaterials = allMaterials.filter(m => m.ownerId === userData.name);
 
-  // For students, show materials from classes they joined
+  // For students, show materials from classes they joined OR their own materials
   const studentMaterials = allMaterials.filter(m => 
-    joinedClasses.includes(m.className) && m.isPublic !== false
+    (joinedClasses.includes(m.className) && m.isPublic !== false) || 
+    m.ownerId === userData.name
   );
 
   const visibleMaterials = userRole === 'student' ? studentMaterials : myMaterials;
