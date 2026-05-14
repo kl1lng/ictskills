@@ -6,10 +6,18 @@ import AddMaterialModal from './AddMaterialModal';
 import AnalyticsView from './AnalyticsView';
 import SettingsView from './SettingsView';
 
-const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, userRole, userData, setUserData, onLogout, onReset, classStudents, submissions, setSubmissions }) => {
+const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, userRole, userData, setUserData, onLogout, onReset, classStudents, submissions, setSubmissions, initialFolderId, setInitialFolderId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('materials'); // 'materials', 'analytics', 'settings'
   const [currentFolderId, setCurrentFolderId] = useState(null);
+
+  // Auto-open shared folder if requested
+  React.useEffect(() => {
+    if (initialFolderId) {
+      setCurrentFolderId(initialFolderId);
+      setInitialFolderId(null);
+    }
+  }, [initialFolderId, setInitialFolderId]);
 
   const isTeacher = userRole === 'teacher';
 

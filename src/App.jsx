@@ -37,6 +37,7 @@ const App = () => {
   });
 
   const [selectedClass, setSelectedClass] = useState('10Б');
+  const [initialFolderId, setInitialFolderId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Sync global state to LocalStorage
@@ -90,27 +91,43 @@ const App = () => {
   // Handle Pending Join
   useEffect(() => {
     if (isLoggedIn && userRole === 'student' && pendingJoinId) {
-      if (!joinedClasses.includes(pendingJoinId)) {
-        const newList = [...joinedClasses, pendingJoinId];
+      const decodedClassId = decodeURIComponent(pendingJoinId);
+      if (!joinedClasses.includes(decodedClassId)) {
+        const newList = [...joinedClasses, decodedClassId];
         setJoinedClasses(newList);
         localStorage.setItem(`joined_classes_${userData.name}`, JSON.stringify(newList));
         
         // Update global class-students mapping
         setClassStudents(prev => {
-          const current = prev[pendingJoinId] || [];
+          const current = prev[decodedClassId] || [];
           if (!current.includes(userData.name)) {
-            return { ...prev, [pendingJoinId]: [...current, userData.name] };
+            return { ...prev, [decodedClassId]: [...current, userData.name] };
           }
           return prev;
         });
 
-        setSelectedClass(pendingJoinId);
-        alert(`Вы успешно присоединились к классу ${pendingJoinId}!`);
+        setSelectedClass(decodedClassId);
+        alert(`Вы успешно присоединились к классу ${decodedClassId}!`);
       }
       setPendingJoinId(null);
-      window.history.replaceState({}, document.title, window.location.pathname);
+      window.history.replaceState({}, document.title, '/');
     }
   }, [isLoggedIn, userRole, pendingJoinId, joinedClasses, userData.name]);
+
+  // Handle Shared Resource Auto-Navigation
+  useEffect(() => {
+    if (isLoggedIn && sharedResourceId) {
+      const resource = allMaterials.find(m => m.id === sharedResourceId);
+      if (resource) {
+        setSelectedClass(resource.className);
+        if (resource.type === 'folder') {
+          setInitialFolderId(resource.id);
+        }
+        setSharedResourceId(null); // Clear after navigating
+        window.history.replaceState({}, document.title, '/');
+      }
+    }
+  }, [isLoggedIn, sharedResourceId, allMaterials]);
 
   const handleLogin = (data) => {
     localStorage.setItem('userRole', data.role);
@@ -206,6 +223,8 @@ const App = () => {
       }}
       selectedClass={selectedClass} 
       setSelectedClass={setSelectedClass}
+      initialFolderId={initialFolderId}
+      setInitialFolderId={setInitialFolderId}
       materials={visibleMaterials}
       setMaterials={(newMats) => {
         const updated = typeof newMats === 'function' ? newMats(myMaterials) : newMats;

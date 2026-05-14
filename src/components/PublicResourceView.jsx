@@ -36,25 +36,37 @@ const PublicResourceView = ({ resource, onShowAll }) => {
             {resource.title}
           </h1>
           <p className="text-slate-500 text-lg mb-10 max-w-md mx-auto">
-            Этот материал был предоставлен учителем через EduSpace. Вы можете просмотреть его или скачать.
+            {resource.type === 'folder' 
+              ? 'Это папка с учебными материалами. Чтобы просмотреть содержимое, войдите в систему.'
+              : 'Этот материал был предоставлен учителем через EduSpace. Вы можете просмотреть его или скачать.'}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a 
-              href={resource.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 transform hover:-translate-y-1"
-            >
-              <ExternalLink size={20} />
-              Открыть материал
-            </a>
+            {resource.type === 'folder' ? (
+              <button 
+                onClick={onShowAll}
+                className="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 transform hover:-translate-y-1"
+              >
+                <ExternalLink size={20} />
+                Войти и открыть папку
+              </button>
+            ) : (
+              <a 
+                href={resource.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 transform hover:-translate-y-1"
+              >
+                <ExternalLink size={20} />
+                Открыть материал
+              </a>
+            )}
             <button 
               onClick={onShowAll}
               className="w-full sm:w-auto px-10 py-4 bg-white border-2 border-slate-100 hover:border-indigo-200 text-slate-600 font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
             >
               <ArrowLeft size={20} />
-              Все материалы курса
+              {resource.type === 'folder' ? 'К списку классов' : 'Все материалы курса'}
             </button>
           </div>
         </div>
