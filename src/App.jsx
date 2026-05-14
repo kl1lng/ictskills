@@ -26,6 +26,16 @@ const App = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [submissions, setSubmissions] = useState(() => {
+    const saved = localStorage.getItem('edu_submissions');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [classStudents, setClassStudents] = useState(() => {
+    const saved = localStorage.getItem('edu_class_students');
+    return saved ? JSON.parse(saved) : {}; // { classId: [studentName, ...] }
+  });
+
   const [selectedClass, setSelectedClass] = useState('10Б');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -37,6 +47,14 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('edu_global_materials', JSON.stringify(allMaterials));
   }, [allMaterials]);
+
+  useEffect(() => {
+    localStorage.setItem('edu_submissions', JSON.stringify(submissions));
+  }, [submissions]);
+
+  useEffect(() => {
+    localStorage.setItem('edu_class_students', JSON.stringify(classStudents));
+  }, [classStudents]);
 
   // Initial Auth & Share Check
   useEffect(() => {
@@ -57,10 +75,11 @@ const App = () => {
     const savedRole = localStorage.getItem('userRole');
     const savedName = localStorage.getItem('userName');
     const savedSubject = localStorage.getItem('userSubject');
+    const savedAvatar = localStorage.getItem('userAvatar');
 
     if (savedName) {
       setUserRole(savedRole || 'teacher');
-      setUserData({ name: savedName, subject: savedSubject || '' });
+      setUserData({ name: savedName, subject: savedSubject || '', avatar: savedAvatar });
       setIsLoggedIn(true);
       
       const savedJoined = localStorage.getItem(`joined_classes_${savedName}`);
@@ -75,6 +94,16 @@ const App = () => {
         const newList = [...joinedClasses, pendingJoinId];
         setJoinedClasses(newList);
         localStorage.setItem(`joined_classes_${userData.name}`, JSON.stringify(newList));
+        
+        // Update global class-students mapping
+        setClassStudents(prev => {
+          const current = prev[pendingJoinId] || [];
+          if (!current.includes(userData.name)) {
+            return { ...prev, [pendingJoinId]: [...current, userData.name] };
+          }
+          return prev;
+        });
+
         setSelectedClass(pendingJoinId);
         alert(`Вы успешно присоединились к классу ${pendingJoinId}!`);
       }
@@ -107,10 +136,18 @@ const App = () => {
     if (savedJoined) setJoinedClasses(JSON.parse(savedJoined));
   };
 
+  const handleUpdateUser = (newData) => {
+    setUserData(newData);
+    localStorage.setItem('userName', newData.name);
+    if (newData.role === 'teacher') localStorage.setItem('userSubject', newData.subject);
+    if (newData.avatar) localStorage.setItem('userAvatar', newData.avatar);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
     localStorage.removeItem('userSubject');
+    localStorage.removeItem('userAvatar');
     setUserData({ name: '', subject: '' });
     setJoinedClasses([]);
     setIsLoggedIn(false);
@@ -179,8 +216,12 @@ const App = () => {
       setSearchQuery={setSearchQuery}
       userRole={userRole}
       userData={userData}
+      setUserData={handleUpdateUser}
       onLogout={handleLogout}
       onReset={resetData}
+      classStudents={classStudents}
+      submissions={submissions}
+      setSubmissions={setSubmissions}
     />
   );
 };

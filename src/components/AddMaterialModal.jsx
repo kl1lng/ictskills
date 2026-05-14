@@ -10,6 +10,9 @@ const AddMaterialModal = ({ isOpen, onClose, onAdd, activeClass }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
 
+  const [deadline, setDeadline] = useState('');
+  const [maxAssignments, setMaxAssignments] = useState('6');
+
   if (!isOpen) return null;
 
   const handleFileChange = (e) => {
@@ -44,7 +47,9 @@ const AddMaterialModal = ({ isOpen, onClose, onAdd, activeClass }) => {
       className: activeClass,
       fileName: selectedFile ? selectedFile.name : null,
       isLocal: source === 'file',
-      topic: 'Общее' // Default topic for new materials
+      topic: 'Общее',
+      deadline: type === 'assignment' ? deadline : null,
+      maxAssignments: type === 'assignment' ? parseInt(maxAssignments) : null
     };
 
     onAdd(newMaterial);
@@ -59,6 +64,8 @@ const AddMaterialModal = ({ isOpen, onClose, onAdd, activeClass }) => {
     setCategory('Теория');
     setSource('url');
     setSelectedFile(null);
+    setDeadline('');
+    setMaxAssignments('6');
   };
 
   return (
@@ -116,6 +123,7 @@ const AddMaterialModal = ({ isOpen, onClose, onAdd, activeClass }) => {
                 <option value="video">Видео-урок</option>
                 <option value="pptx">Презентация (PPTX)</option>
                 <option value="link">Внешняя ссылка</option>
+                <option value="assignment">Задание</option>
               </select>
             </div>
             
@@ -131,6 +139,33 @@ const AddMaterialModal = ({ isOpen, onClose, onAdd, activeClass }) => {
               />
             </div>
           </div>
+
+          {type === 'assignment' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Дедлайн</label>
+                <input 
+                  type="date" 
+                  value={deadline}
+                  onChange={e => setDeadline(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Заданий в курсе</label>
+                <input 
+                  type="number" 
+                  value={maxAssignments}
+                  onChange={e => setMaxAssignments(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  min="1"
+                  placeholder="6"
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           {source === 'url' ? (
             <div>

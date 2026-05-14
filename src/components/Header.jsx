@@ -92,8 +92,12 @@ const Header = ({ searchQuery, setSearchQuery, onAddClick, onAddFolderClick, vie
             <p className="text-sm font-semibold text-slate-800 truncate max-w-[100px]">{userData?.name || 'Пользователь'}</p>
             <p className="text-xs text-slate-500 truncate max-w-[100px]">{isTeacher ? (userData?.subject || 'Учитель') : 'Ученик'}</p>
           </div>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 border border-slate-200 shrink-0">
-            <User size={18} />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 border border-slate-200 shrink-0 overflow-hidden">
+            {userData?.avatar ? (
+              <img src={userData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <User size={18} />
+            )}
           </div>
           <button onClick={onLogout} className="p-1 sm:p-2 text-slate-400 hover:text-red-500 transition-colors" title="Выход">
             <LogOut size={18} />

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { X, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SubmissionModal = ({ isOpen, onClose, item }) => {
-  const [studentName, setStudentName] = useState('');
+const SubmissionModal = ({ isOpen, onClose, item, onAdd, userData }) => {
+  const [studentName, setStudentName] = useState(userData?.name || '');
   const [workUrl, setWorkUrl] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -13,12 +13,23 @@ const SubmissionModal = ({ isOpen, onClose, item }) => {
     e.preventDefault();
     if (!studentName || !workUrl) return;
     
+    const submission = {
+      id: Date.now(),
+      resourceId: item.id,
+      resourceTitle: item.title,
+      studentName: studentName,
+      workUrl: workUrl,
+      submittedAt: new Date().toISOString(),
+      classId: item.className,
+      isLate: item.deadline ? new Date() > new Date(item.deadline) : false
+    };
+
+    onAdd(submission);
     setIsSuccess(true);
     
     // Auto-close after 2 seconds
     setTimeout(() => {
       setIsSuccess(false);
-      setStudentName('');
       setWorkUrl('');
       onClose();
     }, 2500);

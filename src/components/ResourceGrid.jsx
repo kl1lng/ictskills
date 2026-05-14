@@ -5,7 +5,7 @@ import ResourceCard from './ResourceCard';
 import SubmissionModal from './SubmissionModal';
 import TestModal from './TestModal';
 
-const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, currentFolderId, setCurrentFolderId, onAddFolder, userRole }) => {
+const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, currentFolderId, setCurrentFolderId, onAddFolder, userRole, submissions, setSubmissions, userData }) => {
   const [submissionItem, setSubmissionItem] = useState(null);
   const [testItem, setTestItem] = useState(null);
 
@@ -139,6 +139,7 @@ const ResourceGrid = ({ materials, setMaterials, activeClass, searchQuery, curre
                     onDelete={() => handleDelete(item.id)}
                     userRole={userRole}
                     onTogglePublic={() => handleTogglePublic(item.id)}
+                    isSubmitted={submissions?.some(s => s.resourceId === item.id && s.studentName === userData.name)}
                   />
                 ))}
               </div>

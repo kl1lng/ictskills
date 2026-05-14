@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GraduationCap, Layout, ChevronRight, Settings, Plus, X, RefreshCcw, PanelLeftClose } from 'lucide-react';
 
-const Sidebar = ({ classes, setClasses, activeClass, setActiveClass, onReset, userRole }) => {
+const Sidebar = ({ classes, setClasses, activeClass, setActiveClass, onReset, userRole, viewMode, setViewMode }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [newClassName, setNewClassName] = useState('');
@@ -56,10 +56,10 @@ const Sidebar = ({ classes, setClasses, activeClass, setActiveClass, onReset, us
           return (
             <button
               key={clsId}
-              onClick={() => setActiveClass(clsId)}
+              onClick={() => { setActiveClass(clsId); setViewMode('materials'); }}
               title={isCollapsed ? `Класс ${clsName}` : ''}
               className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-3 rounded-xl transition-all duration-200 ${
-                activeClass === clsId 
+                activeClass === clsId && viewMode === 'materials'
                 ? 'bg-indigo-50 text-indigo-700 font-medium' 
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
@@ -68,14 +68,21 @@ const Sidebar = ({ classes, setClasses, activeClass, setActiveClass, onReset, us
                 <Layout size={18} className="shrink-0" />
                 {!isCollapsed && <span className="truncate">Класс {clsName}</span>}
               </div>
-              {activeClass === clsId && !isCollapsed && <ChevronRight size={16} className="shrink-0" />}
+              {activeClass === clsId && !isCollapsed && viewMode === 'materials' && <ChevronRight size={16} className="shrink-0" />}
             </button>
           );
         })}
       </nav>
 
       <div className="p-4 border-t border-slate-100 mt-auto space-y-1">
-        <button className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors`}>
+        <button 
+          onClick={() => setViewMode('settings')}
+          className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl transition-colors ${
+            viewMode === 'settings'
+            ? 'bg-indigo-50 text-indigo-700 font-medium'
+            : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
           <Settings size={18} className="shrink-0" />
           {!isCollapsed && <span>Настройки</span>}
         </button>

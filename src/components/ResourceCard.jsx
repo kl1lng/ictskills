@@ -181,13 +181,13 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder, 
               </button>
             )}
             
-            {!isTeacher && (item.category === 'Задания' || item.category === 'Практика') && (
+            {!isTeacher && (item.category === 'Задания' || item.category === 'Практика' || item.type === 'assignment') && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onSubmitWork(item); }} 
-                className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-all flex items-center gap-1.5"
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${isSubmitted ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}
               >
                 <Send size={14} />
-                Сдать работу
+                {isSubmitted ? 'Пересдать' : 'Сдать работу'}
               </button>
             )}
 

@@ -4,10 +4,11 @@ import Header from './Header';
 import ResourceGrid from './ResourceGrid';
 import AddMaterialModal from './AddMaterialModal';
 import AnalyticsView from './AnalyticsView';
+import SettingsView from './SettingsView';
 
-const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, userRole, userData, onLogout, onReset }) => {
+const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, userRole, userData, setUserData, onLogout, onReset, classStudents, submissions, setSubmissions }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('materials'); // 'materials' or 'analytics'
+  const [viewMode, setViewMode] = useState('materials'); // 'materials', 'analytics', 'settings'
   const [currentFolderId, setCurrentFolderId] = useState(null);
 
   const isTeacher = userRole === 'teacher';
@@ -28,15 +29,31 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
     }
   };
 
+  const getTitle = () => {
+    if (viewMode === 'materials') return 'Учебные материалы';
+    if (viewMode === 'analytics') return 'Аналитика класса';
+    if (viewMode === 'settings') return 'Настройки';
+    return '';
+  };
+
+  const getDescription = () => {
+    if (viewMode === 'materials') return `Управление контентом для ${selectedClass} класса`;
+    if (viewMode === 'analytics') return `Статистика успеваемости учеников ${selectedClass} класса`;
+    if (viewMode === 'settings') return 'Персонализация вашего профиля и аккаунта';
+    return '';
+  };
+
   return (
     <div className="flex flex-row h-screen font-sans text-slate-900 bg-white">
       <Sidebar 
         classes={classes} 
         setClasses={setClasses} 
         activeClass={selectedClass} 
-        setActiveClass={(newClass) => { setSelectedClass(newClass); setCurrentFolderId(null); }} 
+        setActiveClass={(newClass) => { setSelectedClass(newClass); setViewMode('materials'); setCurrentFolderId(null); }} 
         onReset={onReset}
         userRole={userRole}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
       />
       
       <main className="flex-1 flex flex-col min-w-0">
@@ -56,16 +73,14 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
         <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-slate-900">
-              {viewMode === 'materials' ? 'Учебные материалы' : 'Аналитика класса'}
+              {getTitle()}
             </h2>
             <p className="text-slate-500 mt-1">
-              {viewMode === 'materials' 
-                ? `Управление контентом для ${selectedClass} класса` 
-                : `Статистика успеваемости учеников ${selectedClass} класса`}
+              {getDescription()}
             </p>
           </div>
 
-          {viewMode === 'materials' ? (
+          {viewMode === 'materials' && (
             <ResourceGrid 
               materials={materials} 
               setMaterials={setMaterials}
@@ -75,9 +90,23 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
               setCurrentFolderId={setCurrentFolderId}
               onAddFolder={handleAddFolder}
               userRole={userRole}
+              submissions={submissions}
+              setSubmissions={setSubmissions}
+              userData={userData}
             />
-          ) : (
-            <AnalyticsView activeClass={selectedClass} />
+          )}
+          
+          {viewMode === 'analytics' && (
+            <AnalyticsView 
+              activeClass={selectedClass} 
+              materials={materials}
+              submissions={submissions}
+              classStudents={classStudents}
+            />
+          )}
+
+          {viewMode === 'settings' && (
+            <SettingsView userData={userData} onUpdate={setUserData} />
           )}
         </div>
       </main>
