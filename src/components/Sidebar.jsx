@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { GraduationCap, Layout, ChevronRight, Settings, Plus, X } from 'lucide-react';
+import { GraduationCap, Layout, ChevronRight, Settings, Plus, X, RefreshCcw } from 'lucide-react';
 
-const Sidebar = ({ classes, setClasses, activeClass, setActiveClass }) => {
+const Sidebar = ({ classes, setClasses, activeClass, setActiveClass, onReset }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newClassName, setNewClassName] = useState('');
 

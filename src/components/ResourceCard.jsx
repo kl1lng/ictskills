@@ -1,15 +1,25 @@
-import React from 'react';
-import { FileText, Video, Link as LinkIcon, ExternalLink, Play, Eye, Presentation } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Video, Link as LinkIcon, ExternalLink, Play, Eye, Presentation, Folder, Trash2, Copy, Check } from 'lucide-react';
 
-const ResourceCard = ({ item, onSubmitWork, onOpenTest }) => {
+const ResourceCard = ({ item, onSubmitWork, onOpenTest, onDelete, onOpenFolder }) => {
+  const [copied, setCopied] = useState(false);
+
   const getIcon = (type) => {
     switch(type) {
-      case 'video': return <Video size={18} />;
-      case 'pdf': return <FileText size={18} />;
-      case 'pptx': return <Presentation size={18} />;
-      case 'link': return <LinkIcon size={18} />;
+      case 'video': return <span className="text-lg leading-none">🎥</span>;
+      case 'pdf': return <span className="text-lg leading-none">📄</span>;
+      case 'pptx': return <span className="text-lg leading-none">📊</span>;
+      case 'link': return <span className="text-lg leading-none">🔗</span>;
+      case 'folder': return <span className="text-lg leading-none">📂</span>;
       default: return <FileText size={18} />;
     }
+  };
+
+  const handleCopy = (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(item.url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const getYoutubeThumbnail = (url) => {
@@ -19,6 +29,14 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest }) => {
   };
 
   const renderPreview = () => {
+    if (item.type === 'folder') {
+      return (
+        <div className="w-full h-full bg-indigo-50 flex items-center justify-center relative group-hover:bg-indigo-100 transition-colors">
+          <Folder className="text-indigo-500 group-hover:scale-110 transition-transform duration-300" size={48} fill="currentColor" fillOpacity={0.1} />
+        </div>
+      );
+    }
+
     const ytThumbnail = item.type === 'video' ? getYoutubeThumbnail(item.url) : null;
     
     if (ytThumbnail) {
@@ -80,19 +98,30 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex flex-col h-full overflow-hidden group hover:-translate-y-1">
-      
+    <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex flex-col h-full overflow-hidden group hover:-translate-y-1 relative">
+      {/* Delete Button */}
+      <button 
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        className="absolute top-3 right-3 z-20 p-2 bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+      >
+        <Trash2 size={16} />
+      </button>
+
       {/* Preview Area */}
       <div className="h-[140px] w-full relative shrink-0 border-b border-slate-50">
         {renderPreview()}
         {/* Hover Overlay */}
         <div 
           className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors duration-300 flex items-center justify-center cursor-pointer" 
-          onClick={() => item.category === 'Тесты' && onOpenTest ? onOpenTest(item) : window.open(item.url, '_blank')}
+          onClick={() => {
+            if (item.type === 'folder') onOpenFolder();
+            else if (item.category === 'Тесты' && onOpenTest) onOpenTest(item);
+            else window.open(item.url, '_blank');
+          }}
         >
           <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-slate-900 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 shadow-lg transform scale-95 group-hover:scale-100">
-            {item.type === 'video' ? <Play size={16} fill="currentColor" /> : <Eye size={16} />}
-            Смотреть
+            {item.type === 'folder' ? <Folder size={16} /> : item.type === 'video' ? <Play size={16} fill="currentColor" /> : <Eye size={16} />}
+            {item.type === 'folder' ? 'Открыть папку' : 'Смотреть'}
           </div>
         </div>
       </div>
@@ -104,12 +133,13 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest }) => {
             item.type === 'video' ? 'bg-blue-50 text-blue-600' :
             item.type === 'pdf' ? 'bg-red-50 text-red-600' :
             item.type === 'pptx' ? 'bg-orange-50 text-orange-600' :
+            item.type === 'folder' ? 'bg-indigo-50 text-indigo-600' :
             'bg-green-50 text-green-600'
           }`}>
             {getIcon(item.type)}
           </div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded">
-            {item.category}
+            {item.type === 'folder' ? 'Папка' : item.category}
           </span>
         </div>
         
@@ -120,23 +150,31 @@ const ResourceCard = ({ item, onSubmitWork, onOpenTest }) => {
             {getIcon(item.type)}
             {item.type}
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {item.type !== 'folder' && (
+              <button 
+                onClick={handleCopy}
+                className={`p-2 rounded-lg transition-all ${copied ? 'text-emerald-500 bg-emerald-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'}`}
+                title="Копировать ссылку"
+              >
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            )}
+            
             {item.category === 'Задания' && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onSubmitWork(item); }} 
                 className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline bg-transparent border-none p-0 cursor-pointer"
               >
-                Сдать работу
+                Сдать
               </button>
             )}
             <button 
               onClick={(e) => { 
                 e.stopPropagation(); 
-                if (item.category === 'Тесты' && onOpenTest) {
-                  onOpenTest(item);
-                } else {
-                  window.open(item.url, '_blank'); 
-                }
+                if (item.type === 'folder') onOpenFolder();
+                else if (item.category === 'Тесты' && onOpenTest) onOpenTest(item);
+                else window.open(item.url, '_blank'); 
               }} 
               className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline bg-transparent border-none p-0 cursor-pointer"
             >

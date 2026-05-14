@@ -8,6 +8,22 @@ import AnalyticsView from './AnalyticsView';
 const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, teacherData, onLogout, onReset }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState('materials'); // 'materials' or 'analytics'
+  const [currentFolderId, setCurrentFolderId] = useState(null);
+
+  const handleAddFolder = () => {
+    const folderName = window.prompt('Введите название новой папки:');
+    if (folderName && folderName.trim()) {
+      const newFolder = {
+        id: Date.now(),
+        title: folderName.trim(),
+        type: 'folder',
+        className: selectedClass,
+        url: '#',
+        folderId: currentFolderId // Set parent folder
+      };
+      setMaterials([...materials, newFolder]);
+    }
+  };
 
   return (
     <div className="flex flex-row h-screen font-sans text-slate-900 bg-white">
@@ -15,7 +31,7 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
         classes={classes} 
         setClasses={setClasses} 
         activeClass={selectedClass} 
-        setActiveClass={setSelectedClass} 
+        setActiveClass={(newClass) => { setSelectedClass(newClass); setCurrentFolderId(null); }} 
         onReset={onReset}
       />
       
@@ -24,6 +40,7 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
           searchQuery={searchQuery} 
           setSearchQuery={setSearchQuery} 
           onAddClick={() => setIsModalOpen(true)} 
+          onAddFolderClick={handleAddFolder}
           viewMode={viewMode}
           setViewMode={setViewMode}
           teacherData={teacherData}
@@ -46,8 +63,12 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
           {viewMode === 'materials' ? (
             <ResourceGrid 
               materials={materials} 
+              setMaterials={setMaterials}
               activeClass={selectedClass} 
               searchQuery={searchQuery} 
+              currentFolderId={currentFolderId}
+              setCurrentFolderId={setCurrentFolderId}
+              onAddFolder={handleAddFolder}
             />
           ) : (
             <AnalyticsView activeClass={selectedClass} />
@@ -58,7 +79,7 @@ const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, mater
       <AddMaterialModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onAdd={(newMaterial) => setMaterials([...materials, newMaterial])} 
+        onAdd={(newMaterial) => setMaterials([...materials, { ...newMaterial, folderId: currentFolderId }])} 
         activeClass={selectedClass}
       />
     </div>

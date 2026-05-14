@@ -1,7 +1,7 @@
 import React from 'react';
-import { Search, User, BookOpen, Bell, Share2, LogOut } from 'lucide-react';
+import { Search, User, BookOpen, Bell, Share2, LogOut, FolderPlus } from 'lucide-react';
 
-const Header = ({ searchQuery, setSearchQuery, onAddClick, viewMode, setViewMode, teacherData, onLogout, selectedClass }) => {
+const Header = ({ searchQuery, setSearchQuery, onAddClick, onAddFolderClick, viewMode, setViewMode, teacherData, onLogout, selectedClass }) => {
   
   const handleShare = () => {
     const link = `https://eduspace.kz/share/class-${selectedClass.toLowerCase()}`;
@@ -43,16 +43,20 @@ const Header = ({ searchQuery, setSearchQuery, onAddClick, viewMode, setViewMode
 
       <div className="flex items-center gap-6">
         {viewMode === 'materials' && (
-          <>
-            <button onClick={handleShare} className="text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-2 font-medium text-sm">
+          <div className="flex items-center gap-3">
+            <button onClick={handleShare} className="text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-2 font-medium text-sm mr-2">
               <Share2 size={18} />
               Поделиться
+            </button>
+            <button onClick={onAddFolderClick} className="text-slate-600 hover:text-indigo-600 px-4 py-2.5 rounded-xl font-medium border border-slate-200 hover:border-indigo-100 transition-all flex items-center gap-2 bg-white">
+              <FolderPlus size={18} />
+              Папка
             </button>
             <button onClick={onAddClick} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md shadow-indigo-200 transition-all flex items-center gap-2">
               <BookOpen size={18} />
               Добавить
             </button>
-          </>
+          </div>
         )}
 
         <button className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors ml-2">
