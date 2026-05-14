@@ -1,0 +1,68 @@
+import React, { useState } from 'react';
+import Sidebar from './Sidebar';
+import Header from './Header';
+import ResourceGrid from './ResourceGrid';
+import AddMaterialModal from './AddMaterialModal';
+import AnalyticsView from './AnalyticsView';
+
+const Dashboard = ({ classes, setClasses, selectedClass, setSelectedClass, materials, setMaterials, searchQuery, setSearchQuery, teacherData, onLogout, onReset }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('materials'); // 'materials' or 'analytics'
+
+  return (
+    <div className="flex flex-row h-screen font-sans text-slate-900 bg-white">
+      <Sidebar 
+        classes={classes} 
+        setClasses={setClasses} 
+        activeClass={selectedClass} 
+        setActiveClass={setSelectedClass} 
+        onReset={onReset}
+      />
+      
+      <main className="flex-1 flex flex-col min-w-0">
+        <Header 
+          searchQuery={searchQuery} 
+          setSearchQuery={setSearchQuery} 
+          onAddClick={() => setIsModalOpen(true)} 
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          teacherData={teacherData}
+          onLogout={onLogout}
+          selectedClass={selectedClass}
+        />
+        
+        <div className="flex-1 overflow-y-auto bg-slate-50 p-8">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-slate-900">
+              {viewMode === 'materials' ? 'Учебные материалы' : 'Аналитика класса'}
+            </h2>
+            <p className="text-slate-500 mt-1">
+              {viewMode === 'materials' 
+                ? `Управление контентом для ${selectedClass} класса` 
+                : `Статистика успеваемости учеников ${selectedClass} класса`}
+            </p>
+          </div>
+
+          {viewMode === 'materials' ? (
+            <ResourceGrid 
+              materials={materials} 
+              activeClass={selectedClass} 
+              searchQuery={searchQuery} 
+            />
+          ) : (
+            <AnalyticsView activeClass={selectedClass} />
+          )}
+        </div>
+      </main>
+
+      <AddMaterialModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAdd={(newMaterial) => setMaterials([...materials, newMaterial])} 
+        activeClass={selectedClass}
+      />
+    </div>
+  );
+};
+
+export default Dashboard;
